@@ -64,10 +64,10 @@ public class MainActivity extends Activity implements LocationListener {
         String urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s";
 
         //Add Telegram token (given Token is fake)
-        String apiToken = "6315890013:AAFZt_qVhmvooyxq6orYb_44OCARoVC1nvQ";
+        String apiToken = "0000000000:aaaaa_bbbbbbbbbbbbbbb_111ccccc2ddd";
 
         //Add chatId (given chatId is fake)
-        String chatId = "-4045342078";
+        String chatId = "-3333333333";
         String text = txt;
 
         urlString = String.format(urlString, apiToken, chatId, text);
