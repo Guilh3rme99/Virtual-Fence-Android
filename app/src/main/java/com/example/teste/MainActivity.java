@@ -12,20 +12,25 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
 import android.widget.TextView;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.UUID;
+
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 
 
 
@@ -46,9 +51,35 @@ public class MainActivity extends Activity implements LocationListener {
     BluetoothSocket socket;
     OutputStream outputStream;
     InputStream inputStream;
+    boolean firstMessage = true;
+
+    String lastMessageSent = "";
+
+    long lastMessageSentTime = 0;
 
     byte[] buffer = new byte[256];  // buffer store for the stream
     int bytes;
+
+    public static void sendToTelegram(String txt) {
+        String urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s";
+
+        //Add Telegram token (given Token is fake)
+        String apiToken = "6315890013:AAFZt_qVhmvooyxq6orYb_44OCARoVC1nvQ";
+
+        //Add chatId (given chatId is fake)
+        String chatId = "-4045342078";
+        String text = txt;
+
+        urlString = String.format(urlString, apiToken, chatId, text);
+
+        try {
+            URL url = new URL(urlString);
+            URLConnection conn = url.openConnection();
+            InputStream is = new BufferedInputStream(conn.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +138,9 @@ public class MainActivity extends Activity implements LocationListener {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        StrictMode.ThreadPolicy gfgPolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(gfgPolicy);
     }
 
 
@@ -126,8 +160,34 @@ public class MainActivity extends Activity implements LocationListener {
 
             bytes = inputStream.read(buffer, 0, inputStream.available());
             String result = new String(buffer, 0, bytes);
+            String text = "Latitude:" + location.getLatitude() + ", Longitude:" + location.getLongitude() + ", Resposta:" + result;
+            txtLat.setText(text);
 
-            txtLat.setText("Latitude:" + location.getLatitude() + ", Longitude:" + location.getLongitude() + "\nResposta:" + result);
+            if(result.equals("Fora da Area")) {
+                if(firstMessage == true) {
+                    firstMessage = false;
+                    lastMessageSentTime = System.currentTimeMillis()/1000;
+                    lastMessageSent = "Fora da Area";
+                    Log.d("Dev","Primeira mensagem time: " + String.valueOf(lastMessageSentTime));
+                    sendToTelegram(text);
+                } else if ((System.currentTimeMillis()/1000) - lastMessageSentTime > 300) {
+                    lastMessageSentTime = System.currentTimeMillis()/1000;
+                    lastMessageSent = "Fora da Area";
+                    Log.d("Dev","Mensagem time: " + String.valueOf(lastMessageSentTime));
+                    sendToTelegram(text);
+                }
+            } else if (result.equals("Dentro da Area")){
+                if (firstMessage == false) {
+                    firstMessage = true;
+                    lastMessageSentTime = System.currentTimeMillis()/1000;
+                    lastMessageSent = "Dentro da Area";
+                    Log.d("Dev","Mensagem dentro time: " + String.valueOf(lastMessageSentTime));
+                    sendToTelegram(text);
+                }
+            }
+
+
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
