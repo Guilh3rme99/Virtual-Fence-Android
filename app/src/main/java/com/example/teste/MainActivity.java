@@ -103,12 +103,13 @@ public class MainActivity extends Activity implements LocationListener {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
-        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        Set<BluetoothDevice> pairedDevices;
         String deviceName;
         String deviceAddress;
         boolean achou = false;
         //BluetoothDevice device = null;
         while(achou == false) {
+            pairedDevices = bluetoothAdapter.getBondedDevices();
             for (BluetoothDevice d : pairedDevices) {
                 // Faça algo com o nome e o endereço do dispositivo
                 deviceName = d.getName();
